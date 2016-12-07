@@ -44,8 +44,8 @@ Update example_config/consul_config.json to meet your needs:
 `uuidgen` will create a new consul acl_master_token for you, which 
 you can plug into the consul_config.json.
 
-Use `consul keygen` or another technique to generate the encryption
-key for 'encrypt' in consul_config.json.
+`consul keygen` will generate the encryption
+key for 'encrypt' in consul_config.json. You can utilize the Consul CLI locally for this.
 
 ```
 kubectl create secret generic consul-config --from-file=your_config/consul_config.json
@@ -131,7 +131,7 @@ consul-3  10.3.254.140:8300  10.3.254.140:8300  follower  true
 We'll use the consul web UI to create this, which avoids all manner of 
 quote-escaping problems.
 
-1. Port-forward port 8500 of consul-1* to local: `kubectl port-forward consul-1* 8500`
+1. Port-forward port 8500 of <consul-1*> to local: `kubectl port-forward <consul-1*> 8500`
 2. Hit http://localhost:8500/ui with browser.
 3. Visit the settings page (gear icon) and enter your acl_master_token.
 3. Click "ACL"
@@ -164,22 +164,23 @@ service "" {
 
 ### TLS setup for exposed vault port
 
-Get key and cert files for the exposed port. You can do this any way
-that works for your deployment. Of course make sure you have the full
-concatenated cert chain. 
+Get key and cert files for the domain vault will be exposed from. You can do this any way
+that works for your deployment, so long as you have a concatenated full certificate chain 
+in vaulttls.fullcert.pem and private key in vaulttls.key :
 
-With concatenated full cert chain in vaulttls.fullcert.pem and key in vaulttls.key :
 ```
 kubectl create secret tls vaulttls --cert=vaulttls.fullcert.pem --key=vaulttls.key
 ```
 
 ### Provide DNS entry for the configured cert on external ip of the vault-lb service
+You can run the following to determine the public IP address to use for your DNS record.
 
 ```
 kubectl get svc vault-lb
 ```
 
 ### Vault Deployment
+You are now ready to deploy the vault instances:
 
 ```
 kubectl apply -f deployments/vault-1.yaml -f deployments/vault-2.yaml
@@ -192,7 +193,7 @@ where HTTP port 9000 is exposed for access without https. You can decide
 how many keys and the recovery threshold using args to `vault init`
 
 ```
-kubectl exec -it vault-1* /bin/sh
+kubectl exec -it <vault-1*> /bin/sh
 
 vault init
 or
@@ -213,7 +214,7 @@ and auth with
 vault auth <initial_root_token>
 ```
 
-Then access vault-2* in the exact same way (kubectl exec -it vault-2* /bin/sh) and unseal it. 
+Then access <vault-2*> in the exact same way (`kubectl exec -it vault-2* /bin/sh`) and unseal it. 
 It will go into standby mode.
 
 ### Vault usage
@@ -244,8 +245,8 @@ value           	1
 ### Vault failover testing
 
 * Both vaults must be unsealed
-* Restart active vault pod with kubectl delete pod vault-1*
-* Vault-2* should become leader "Mode: active"
-* Unseal vault-1* - `vault status` will find it in "Mode: standby"
-* Restart/kill vault-2* or kill the process
-* Vault-1* will become active
+* Restart active vault pod with kubectl delete pod <vault-1*>
+* <vault-2*> should become leader "Mode: active"
+* Unseal <vault-1*> - `vault status` will find it in "Mode: standby"
+* Restart/kill <vault-2*> or kill the process
+* <vault-1*> will become active
