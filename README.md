@@ -2,14 +2,14 @@
 
 This process will bring up a 3-member consul cluster and a two vault servers running in an HA configuration.
 
-Consul starter was from [Kelsey Hightower's Consul-on-Kubernetes](https://github.com/kelseyhightower/consul-on-kubernetes) 
+Consul starter was from [Kelsey Hightower's Consul-on-Kubernetes](https://github.com/kelseyhightower/consul-on-kubernetes)
 Thanks!
 
 ## Overview
 
-A cluster of three [consul](https://github.com/hashicorp/consul) servers provides an HA back-end for two [vault](https://github.com/hashicorp/vault) servers. 
+A cluster of three [consul](https://github.com/hashicorp/consul) servers provides an HA back-end for two [vault](https://github.com/hashicorp/vault) servers.
 
-Consul is not exposed outside the cluster. Vault is exposed on a 
+Consul is not exposed outside the cluster. Vault is exposed on a
 load-balancer service via https.
 
 ## What makes this work
@@ -26,36 +26,36 @@ load-balancer service via https.
 
 ### Create Volumes
 
-```
-gcloud compute disks create --size=50GB consul-1 consul-2 consul-3
+``` sh
+$ gcloud compute disks create --size=50GB consul-1 consul-2 consul-3
 ```
 
 ### Create consul-config secret for consul configuration
 
 Update example_config/consul_config.json to meet your needs:
 
-`uuidgen` will create a new consul acl_master_token for you, which 
+`uuidgen` will create a new consul acl_master_token for you, which
 you can plug into the consul_config.json.
 
 `consul keygen` will generate the encryption
 key for 'encrypt' in consul_config.json. You can utilize the Consul CLI locally for this.
 
-```
-kubectl create secret generic consul-config --from-file=your_config/consul_config.json
+``` sh
+$ kubectl create secret generic consul-config --from-file=your_config/consul_config.json
 ```
 
 ### Consul Deployment
 
 Create one deployment per consul member.
 
-```
-kubectl apply -f deployments/consul-1.yaml -f deployments/consul-2.yaml -f deployments/consul-3.yaml
+``` sh
+$ kubectl apply -f deployments/consul-1.yaml -f deployments/consul-2.yaml -f deployments/consul-3.yaml
 ```
 
+``` sh
+$ kubectl get pods
 ```
-kubectl get pods
-```
-```
+``` sh
 NAME                        READY     STATUS    RESTARTS   AGE
 consul-1-3104874582-6o4n4   1/1       Running   0          1m
 consul-2-3080431481-7mf6r   1/1       Running   0          1m
@@ -65,10 +65,10 @@ consul-3-3678840700-3bp3k   1/1       Running   0          1m
 
 ### Verification
 
+``` sh
+$ kubectl logs consul-1-3104874582-6o4n4
 ```
-kubectl logs consul-1-3104874582-6o4n4
-```
-```
+``` sh
 ==> WARNING: Expect Mode enabled, expecting 3 servers
 ==> Starting Consul agent...
 ==> Starting Consul agent RPC...
@@ -106,8 +106,8 @@ kubectl logs consul-1-3104874582-6o4n4
 ```
 
 Log into consul-1:
-```
-kubectl exec -it consul-1-117271-uw97q /bin/sh
+``` sh
+$ kubectl exec -it consul-1-117271-uw97q /bin/sh
 ```
 
 Use the acl_master_token in your consul_config.json:
@@ -121,7 +121,7 @@ consul-3  10.3.254.140:8300  10.3.254.140:8300  follower  true
 
 ### Create a key that vault will use to access consul (vault-consul-key)
 
-We'll use the consul web UI to create this, which avoids all manner of 
+We'll use the consul web UI to create this, which avoids all manner of
 quote-escaping problems.
 
 1. Port-forward port 8500 of <consul-1*> to local: `kubectl port-forward <consul-1*> 8500`
@@ -135,8 +135,8 @@ key "vault/" {
 }
 ```
 5. Capture the newly created vault-token and with it (example key here):
-```
-kubectl create secret generic vault-consul-key --from-literal=consul-key=9f34ab90-965c-56c7-37e0-362da75bfad9
+``` sh
+$ kubectl create secret generic vault-consul-key --from-literal=consul-key=9f34ab90-965c-56c7-37e0-362da75bfad9
 ```
 
 ### Set the rules for the Anonymous Token
@@ -158,39 +158,39 @@ service "" {
 ### TLS setup for exposed vault port
 
 Get key and cert files for the domain vault will be exposed from. You can do this any way
-that works for your deployment, including a [self-signed certificate](http://www.akadia.com/services/ssh_test_certificate.html), so long as you have a concatenated full certificate chain 
+that works for your deployment, including a [self-signed certificate](http://www.akadia.com/services/ssh_test_certificate.html), so long as you have a concatenated full certificate chain
 in vaulttls.fullcert.pem and private key in vaulttls.key :
 
-```
-kubectl create secret tls vaulttls --cert=vaulttls.fullcert.pem --key=vaulttls.key
+``` sh
+$ kubectl create secret tls vaulttls --cert=vaulttls.fullcert.pem --key=vaulttls.key
 ```
 
 ### Provide DNS entry for the configured cert on external ip of the vault-lb service
 You can run the following to determine the public IP address to use for your DNS record.
 
-```
-kubectl get svc vault-lb
+``` sh
+$ kubectl get svc vault-lb
 ```
 
 ### Vault Deployment
 You are now ready to deploy the vault instances:
 
-```
-kubectl apply -f deployments/vault-1.yaml -f deployments/vault-2.yaml
+``` sh
+$ kubectl apply -f deployments/vault-1.yaml -f deployments/vault-2.yaml
 ```
 
-### Vault Iniitialization
+### Vault Initialization
 
 It's easiest to access the vault in its initial setup on the pod itself,
 where HTTP port 9000 is exposed for access without https. You can decide
 how many keys and the recovery threshold using args to `vault init`
 
-```
-kubectl exec -it <vault-1*> /bin/sh
+``` sh
+$ kubectl exec -it <vault-1*> /bin/sh
 
-vault init
+$ vault init
 or
-vault init -key-shares=1 -key-threshold=1
+$ vault init -key-shares=1 -key-threshold=1
 
 ```
 
@@ -198,28 +198,29 @@ This provides the key(s) and initial auth token required.
 
 Unseal with
 
-```
-vault unseal
+``` sh
+$ vault unseal
 ```
 
 (You should not generally use the form `vault unseal <key>` because it probably will leave traces of the key in shell history or elsewhere.)
 
 and auth with
-```
-vault auth <initial_root_token>
+``` sh
+$ vault auth
+Token (will be hidden): <initial_root_token>
 ```
 
-Then access <vault-2*> in the exact same way (`kubectl exec -it vault-2* /bin/sh`) and unseal it. 
+Then access <vault-2*> in the exact same way (`kubectl exec -it vault-2* /bin/sh`) and unseal it.
 It will go into standby mode.
 
 ### Vault usage
 
 On your local/client machine:
 
-```
-export VAULT_ADDR=https://vault.example.com:8200
-vault status
-vault auth <root_or_other_token>
+``` sh
+$ export VAULT_ADDR=https://vault.example.com:8200
+$ vault status
+$ vault auth <root_or_other_token>
 
 $ vault write /secret/test1 value=1
 Success! Data written to: secret/test1

@@ -8,11 +8,11 @@
 
 ## Background
 
-Vault is simply a front-end to consul as a storage mechanism. It has no state of its own. 
+Vault is simply a front-end to consul as a storage mechanism. It has no state of its own.
 
-When a vault server has access to a working consul cluster, it can be unsealed and access secrets. 
+When a vault server has access to a working consul cluster, it can be unsealed and access secrets.
 
-The Consul cluster is a set of 3 servers that sync the full set of information among themselves. They can continue functioning as long as they have a quorum (2 servers) but cease to function otherwise. 
+The Consul cluster is a set of 3 servers that sync the full set of information among themselves. They can continue functioning as long as they have a quorum (2 servers) but cease to function otherwise.
 
 #### Basic useful skills, diagnostics, resources
 
@@ -35,9 +35,11 @@ will show "Mode: sealed"
 #### Response: Unseal the vault servers
 
 ```
-kubectl -it vault-1<*> /bin/sh
-vault unseal <unseal key>
-vault unseal <key2>
+$ kubectl -it vault-1<*> /bin/sh
+$ vault unseal
+Key (will be hidden): <unseal key>
+$ vault unseal
+Key (will be hidden): <key 2>
 ...
 ```
 
@@ -75,7 +77,7 @@ All servers came up, vault servers can be unsealed.
 
 ## Scenario: Consul servers are unable to elect a leader
 
-In this situation, you see in the logs lots of negotiation, but no leader. It is most likely a result of them not being successful in talking with each other. 
+In this situation, you see in the logs lots of negotiation, but no leader. It is most likely a result of them not being successful in talking with each other.
 
 You will most likely need to review the logs to try to figure out what has happened.
 
@@ -85,7 +87,7 @@ You may have to rebuild a new app if you can't figure it out.
 
 ## Scenario: Complete loss of consul cluster (but consul volumes are intact)
 
-In this situation, due to loss of all nodes, or due to some other event, we have the consul-1, consul-2 and consul-3 disk volumes, but nothing else. 
+In this situation, due to loss of all nodes, or due to some other event, we have the consul-1, consul-2 and consul-3 disk volumes, but nothing else.
 
 We can either use the existing disk volumes, or start with them and then load a snapshot. The snapshot guarantees consistency at a point in time, the disk volumes might not.
 
@@ -120,7 +122,7 @@ In this situation, the consul cluster is functional but fragile, as one of the 3
 
 It's discussed under "Failure of a Server in a Multi-Server Cluster" on https://www.consul.io/docs/guides/outage.html - It's possible that some of the advanced techniques mentioned there would need to be done.
 
-Demonstrate this with: 
+Demonstrate this with:
 1. kill -9 the consul process on <consul-3*> and immediately delete the consul-3 deployment
 2. Delete and recreate the consul-3 disk
 
@@ -131,12 +133,12 @@ Demonstrate this with:
 
 #### Success indication
 
-* The server should be accepted back into the cluster. 
+* The server should be accepted back into the cluster.
 * Vault servers can be unsealed and secrets read
 
 ## Scenario: Millions of logfile complaints about not being able to reach a consul server by UDP
 
-This problem is apparently a Linux/docker bug which is triggered when the consul container restarts. See [docker issue](https://github.com/docker/docker/issues/8795). It does not seem to affect cluster functionality, but you'll have to filter logs to see anything but this one log. 
+This problem is apparently a Linux/docker bug which is triggered when the consul container restarts. See [docker issue](https://github.com/docker/docker/issues/8795). It does not seem to affect cluster functionality, but you'll have to filter logs to see anything but this one log.
 
 ```
 [WARN] memberlist: Was able to reach consul-3 via TCP but not UDP, network may be misconfigured and not allowing bidirectional UDP
@@ -144,7 +146,7 @@ This problem is apparently a Linux/docker bug which is triggered when the consul
 
 #### Response: UGLY and involves downtime: Delete the deployments, reboot the nodes
 
-1. Capture a consul snapshot and transfer it to local. 
+1. Capture a consul snapshot and transfer it to local.
 2. Delete consul deployments: `kubectl delete deployment consul-1 consul-2 consul-3`
 3. Reboot (one at a time preferably) each node in cluster (`kubectl get no`) (can be done with web UI or gcloud compute ssh): `gcloud compute ssh gke-vault-freshstart-default-pool-c003fbba-fnhl -- sudo reboot`
 4. Recreate the consul deployments: `kubectl apply -f deployments/consul-1.yaml -f deployments/consul-2.yaml -f deployments/consul-3.yaml`
@@ -163,5 +165,5 @@ In this scenario, all disks, deployments, and services have been lost, and we ne
 1. Follow the full README.md process to set up the clusters.
 2. Get the consul snapshot you need up to a consul server. We'll use consul-1: `uuencode fullsnap201612071509.snap fullsnap201612071509.snap | kubectl exec -it consul-1-3058537447-fnlt1 uudecode`
 3. On consul-1* find the acl_master_token in /etc/consul/consul_config.json and use it to load the snapshot: `consul snapshot restore -token=8F2383EF-5199-4ED8-B20C-EF34D23FF109 fullsnap201612071509.snap`
-4. Unseal the vault servers. 
+4. Unseal the vault servers.
 5. Go forth and prosper. Don't get in this situation again :)
