@@ -112,7 +112,7 @@ $ kubectl exec -it consul-1-117271-uw97q /bin/sh
 
 Use the acl_master_token in your consul_config.json:
 ```
-consul operator raft -list-peers -token=C4213989-B836-4A8F-A649-110803BCCDC3
+$ consul operator raft -list-peers -token=C4213989-B836-4A8F-A649-110803BCCDC3
 Node      ID                 Address            State     Voter
 consul-2  10.3.245.79:8300   10.3.245.79:8300   leader    true
 consul-1  10.3.240.72:8300   10.3.240.72:8300   follower  true
