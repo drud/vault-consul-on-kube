@@ -20,11 +20,11 @@ spec:
           resources:
             requests:
               cpu: 300m
-              memory: 700Mi
+              memory: 1000Mi
             limits:
               cpu: 300m
               # Active vault has been seen with 700Mi
-              memory: 1000Mi
+              memory: 1500Mi
           ports:
           - containerPort: 8200
             name: main-port
