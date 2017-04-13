@@ -15,7 +15,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: vault
-          image: "drud/vault:0.6.3-2"
+          image: "drud/vault:0.7.0-1"
           resources:
           resources:
             requests:
