@@ -27,7 +27,7 @@ load-balancer service via https.
 ### Create Volumes
 
 ``` sh
-$ gcloud compute disks create --size=50GB consul-1 consul-2 consul-3
+$ kubectl apply -f ./pv
 ```
 
 ### Create consul-config secret for consul configuration
