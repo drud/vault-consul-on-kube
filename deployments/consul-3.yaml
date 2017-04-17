@@ -68,9 +68,8 @@ spec:
 
       volumes:
         - name: data
-          gcePersistentDisk:
-            pdName: consul-3
-            fsType: ext4
+          persistentVolumeClaim:
+            claimName: consul-3
         - name: "consulconfig"
           "secret": {
             "secretName": "consul-config"

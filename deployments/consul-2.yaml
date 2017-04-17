@@ -66,9 +66,8 @@ spec:
               mountPath: /etc/consul
       volumes:
         - name: data
-          gcePersistentDisk:
-            pdName: consul-2
-            fsType: ext4
+          persistentVolumeClaim:
+            claimName: consul-2
         - name: "consulconfig"
           "secret": {
             "secretName": "consul-config"
