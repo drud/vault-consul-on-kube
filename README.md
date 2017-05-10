@@ -131,8 +131,8 @@ quote-escaping problems.
 4. Add an ACL with name vault-token, type client, rules:
 ```
 key "vault/" { policy = "write" },
-service "vault" {"policy"= "write"} 
-
+service "vault" { policy = "write" }
+session "vault" { policy = "write" }
 ```
 5. Capture the newly created vault-token and with it (example key here):
 ``` sh

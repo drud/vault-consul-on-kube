@@ -14,7 +14,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: consul
-          image: "consul:0.7.2"
+          image: "consul:0.8.2"
           resources:
             requests:
               cpu: 100m
