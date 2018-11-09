@@ -17,7 +17,6 @@ spec:
         - name: vault
           image: "drud/vault:0.7.0"
           resources:
-          resources:
             requests:
               cpu: 300m
               memory: 1000Mi
